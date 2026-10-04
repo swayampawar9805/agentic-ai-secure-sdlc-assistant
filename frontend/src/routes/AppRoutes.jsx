@@ -13,6 +13,12 @@ import ProjectDetails from "../pages/ProjectDetails";
 import Scans from "../pages/Scans";
 import NewScan from "../pages/NewScan";
 import ScanDetails from "../pages/ScanDetails";
+import Vulnerabilities from "../pages/Vulnerabilities";
+import VulnerabilityDetails from "../pages/VulnerabilityDetails";
+
+import {
+  VulnerabilityProvider,
+} from "../context/VulnerabilityContext";
 
 import { ScanProvider } from "../context/ScanContext";
 
@@ -22,8 +28,9 @@ function AppRoutes() {
   return (
     <ProjectProvider>
       <ScanProvider>
-        <BrowserRouter>
-          <Routes>
+        <VulnerabilityProvider>
+          <BrowserRouter>
+            <Routes>
 
             <Route element={<AppLayout />}>
 
@@ -67,6 +74,16 @@ function AppRoutes() {
                 element={<ScanDetails />}
               />
 
+              <Route
+                path="/vulnerabilities"
+                element={<Vulnerabilities />}
+              />
+
+              <Route
+                path="/vulnerabilities/:id"
+                element={<VulnerabilityDetails />}
+              />
+
               {/* Retain all your other existing routes */}
 
             </Route>
@@ -76,8 +93,9 @@ function AppRoutes() {
               element={<Navigate to="/dashboard" replace />}
             />
 
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </VulnerabilityProvider>
       </ScanProvider>
     </ProjectProvider>
   );
