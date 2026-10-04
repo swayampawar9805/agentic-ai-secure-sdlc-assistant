@@ -57,7 +57,7 @@ const navigation = [
       },
       {
         name: "Threat Modeling",
-        path: "/threat-modeling",
+        path: "/threats",
         icon: Network,
       },
       {

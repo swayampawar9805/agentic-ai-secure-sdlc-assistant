@@ -9,6 +9,7 @@ import "./styles/dashboard.css";
 import "./styles/projects.css";
 import "./styles/scans.css";
 import "./styles/vulnerabilities.css";
+import "./styles/threats.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -15,6 +15,10 @@ import NewScan from "../pages/NewScan";
 import ScanDetails from "../pages/ScanDetails";
 import Vulnerabilities from "../pages/Vulnerabilities";
 import VulnerabilityDetails from "../pages/VulnerabilityDetails";
+import ThreatModeling from "../pages/ThreatModeling";
+import ThreatDetails from "../pages/ThreatDetails";
+
+import { ThreatProvider } from "../context/ThreatContext";
 
 import {
   VulnerabilityProvider,
@@ -29,8 +33,9 @@ function AppRoutes() {
     <ProjectProvider>
       <ScanProvider>
         <VulnerabilityProvider>
-          <BrowserRouter>
-            <Routes>
+          <ThreatProvider>
+            <BrowserRouter>
+              <Routes>
 
             <Route element={<AppLayout />}>
 
@@ -84,6 +89,16 @@ function AppRoutes() {
                 element={<VulnerabilityDetails />}
               />
 
+              <Route
+                path="/threats"
+                element={<ThreatModeling />}
+              />
+
+              <Route
+                path="/threats/:id"
+                element={<ThreatDetails />}
+              />
+
               {/* Retain all your other existing routes */}
 
             </Route>
@@ -95,6 +110,7 @@ function AppRoutes() {
 
             </Routes>
           </BrowserRouter>
+        </ThreatProvider>
         </VulnerabilityProvider>
       </ScanProvider>
     </ProjectProvider>
