@@ -7,6 +7,7 @@ import "./styles/global.css";
 import "./styles/layout.css";
 import "./styles/dashboard.css";
 import "./styles/projects.css";
+import "./styles/scans.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
