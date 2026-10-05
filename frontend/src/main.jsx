@@ -10,6 +10,8 @@ import "./styles/projects.css";
 import "./styles/scans.css";
 import "./styles/vulnerabilities.css";
 import "./styles/threats.css";
+import "./styles/agents.css";
+import "./styles/reports.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

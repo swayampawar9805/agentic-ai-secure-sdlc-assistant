@@ -17,6 +17,12 @@ import Vulnerabilities from "../pages/Vulnerabilities";
 import VulnerabilityDetails from "../pages/VulnerabilityDetails";
 import ThreatModeling from "../pages/ThreatModeling";
 import ThreatDetails from "../pages/ThreatDetails";
+import AIAgents from "../pages/AIAgents";
+import AgentExecution from "../pages/AgentExecution";
+import SecurityReports from "../pages/SecurityReports";
+import ReportDetails from "../pages/ReportDetails";
+
+import { AgentProvider } from "../context/AgentContext";
 
 import { ThreatProvider } from "../context/ThreatContext";
 
@@ -34,6 +40,7 @@ function AppRoutes() {
       <ScanProvider>
         <VulnerabilityProvider>
           <ThreatProvider>
+            <AgentProvider>
             <BrowserRouter>
               <Routes>
 
@@ -99,6 +106,26 @@ function AppRoutes() {
                 element={<ThreatDetails />}
               />
 
+              <Route
+                path="/agents"
+                element={<AIAgents />}
+              />
+
+              <Route
+                path="/agents/executions/:id"
+                element={<AgentExecution />}
+              />
+
+              <Route
+                path="/reports"
+                element={<SecurityReports />}
+              />
+
+              <Route
+                path="/reports/:id"
+                element={<ReportDetails />}
+              />
+
               {/* Retain all your other existing routes */}
 
             </Route>
@@ -110,6 +137,7 @@ function AppRoutes() {
 
             </Routes>
           </BrowserRouter>
+            </AgentProvider>
         </ThreatProvider>
         </VulnerabilityProvider>
       </ScanProvider>
