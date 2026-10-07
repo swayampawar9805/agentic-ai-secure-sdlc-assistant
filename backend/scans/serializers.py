@@ -35,6 +35,7 @@ class ScanSerializer(
             'created_by_username',
             'scan_type',
             'status',
+            'error_message',
             'finding_count',
             'started_at',
             'completed_at',

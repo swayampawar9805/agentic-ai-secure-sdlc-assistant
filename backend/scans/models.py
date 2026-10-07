@@ -43,6 +43,11 @@ class Scan(models.Model):
         default='pending'
     )
 
+    error_message = models.TextField(
+        blank=True,
+        default=""
+    )
+
     started_at = models.DateTimeField(
         null=True,
         blank=True

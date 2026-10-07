@@ -14,6 +14,9 @@ from .serializers import (
 )
 
 
+from .services import run_scan
+
+
 class ScanListCreateView(generics.ListCreateAPIView):
     serializer_class = ScanSerializer
     permission_classes = [IsAuthenticated]
@@ -22,7 +25,10 @@ class ScanListCreateView(generics.ListCreateAPIView):
         return (
             Scan.objects
             .filter(created_by=self.request.user)
-            .select_related("project", "created_by")
+            .select_related(
+                "project",
+                "created_by"
+            )
             .annotate(
                 finding_count=Count("findings")
             )
@@ -30,16 +36,24 @@ class ScanListCreateView(generics.ListCreateAPIView):
         )
 
     def perform_create(self, serializer):
+
         project = serializer.validated_data["project"]
 
+        # Make sure the project belongs to
+        # the logged-in developer.
         if project.created_by != self.request.user:
             raise PermissionDenied(
-                "You do not have permission to create a scan for this project."
+                "You do not have permission "
+                "to create a scan for this project."
             )
 
-        serializer.save(
+        # Create the Scan first.
+        scan = serializer.save(
             created_by=self.request.user
         )
+
+        # Run the actual security scan.
+        run_scan(scan)
 
 
 class ScanDetailView(
