@@ -6,6 +6,8 @@ import {
 } from "react-router-dom";
 
 import AppLayout from "../components/layout/AppLayout";
+import ProtectedRoute from "../components/ProtectedRoute"; // <-- FIXED: Added missing import
+
 import Dashboard from "../pages/Dashboard";
 import Projects from "../pages/Projects";
 import NewProject from "../pages/NewProject";
@@ -21,18 +23,16 @@ import AIAgents from "../pages/AIAgents";
 import AgentExecution from "../pages/AgentExecution";
 import SecurityReports from "../pages/SecurityReports";
 import ReportDetails from "../pages/ReportDetails";
+import Login from "../pages/Login/Login";
+import Register from "../pages/Register";
+
 
 import { AgentProvider } from "../context/AgentContext";
-
 import { ThreatProvider } from "../context/ThreatContext";
-
-import {
-  VulnerabilityProvider,
-} from "../context/VulnerabilityContext";
-
+import { VulnerabilityProvider } from "../context/VulnerabilityContext";
 import { ScanProvider } from "../context/ScanContext";
-
 import { ProjectProvider } from "../context/ProjectContext";
+import { FindingProvider } from "../context/FindingContext";
 
 function AppRoutes() {
   return (
@@ -41,104 +41,167 @@ function AppRoutes() {
         <VulnerabilityProvider>
           <ThreatProvider>
             <AgentProvider>
-            <BrowserRouter>
-              <Routes>
+              <FindingProvider>
+                <BrowserRouter>
+                  <Routes>
+                    {/* Public route outside AppLayout */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
-            <Route element={<AppLayout />}>
+                  {/* Protected layout routes */}
+                  <Route element={<AppLayout />}>
+                    <Route
+                      path="/"
+                      element={<Navigate to="/dashboard" replace />}
+                    />
 
-              <Route
-                path="/"
-                element={<Navigate to="/dashboard" replace />}
-              />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/dashboard"
-                element={<Dashboard />}
-              />
+                    <Route
+                      path="/projects"
+                      element={
+                        <ProtectedRoute>
+                          <Projects />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/projects"
-                element={<Projects />}
-              />
+                    <Route
+                      path="/projects/new"
+                      element={
+                        <ProtectedRoute>
+                          <NewProject />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/projects/new"
-                element={<NewProject />}
-              />
+                    <Route
+                      path="/projects/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ProjectDetails />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/projects/:id"
-                element={<ProjectDetails />}
-              />
+                    <Route
+                      path="/scans"
+                      element={
+                        <ProtectedRoute>
+                          <Scans />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/scans"
-                element={<Scans />}
-              />
+                    <Route
+                      path="/scans/new"
+                      element={
+                        <ProtectedRoute>
+                          <NewScan />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/scans/new"
-                element={<NewScan />}
-              />
+                    <Route
+                      path="/scans/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ScanDetails />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/scans/:id"
-                element={<ScanDetails />}
-              />
+                    <Route
+                      path="/vulnerabilities"
+                      element={
+                        <ProtectedRoute>
+                          <Vulnerabilities />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/vulnerabilities"
-                element={<Vulnerabilities />}
-              />
+                    <Route
+                      path="/vulnerabilities/:id"
+                      element={
+                        <ProtectedRoute>
+                          <VulnerabilityDetails />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/vulnerabilities/:id"
-                element={<VulnerabilityDetails />}
-              />
+                    <Route
+                      path="/threats"
+                      element={
+                        <ProtectedRoute>
+                          <ThreatModeling />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/threats"
-                element={<ThreatModeling />}
-              />
+                    <Route
+                      path="/threats/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ThreatDetails />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/threats/:id"
-                element={<ThreatDetails />}
-              />
+                    <Route
+                      path="/agents"
+                      element={
+                        <ProtectedRoute>
+                          <AIAgents />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/agents"
-                element={<AIAgents />}
-              />
+                    <Route
+                      path="/agents/executions/:id"
+                      element={
+                        <ProtectedRoute>
+                          <AgentExecution />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/agents/executions/:id"
-                element={<AgentExecution />}
-              />
+                    <Route
+                      path="/reports"
+                      element={
+                        <ProtectedRoute>
+                          <SecurityReports />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              <Route
-                path="/reports"
-                element={<SecurityReports />}
-              />
+                    <Route
+                      path="/reports/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ReportDetails />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
 
-              <Route
-                path="/reports/:id"
-                element={<ReportDetails />}
-              />
 
-              {/* Retain all your other existing routes */}
-
-            </Route>
-
-            <Route
-              path="*"
-              element={<Navigate to="/dashboard" replace />}
-            />
-
-            </Routes>
-          </BrowserRouter>
+                  {/* Fallback Catch-all Route */}
+                  <Route
+                    path="*"
+                    element={<Navigate to="/dashboard" replace />}
+                  />
+                </Routes>
+              </BrowserRouter>
+              </FindingProvider>
             </AgentProvider>
-        </ThreatProvider>
+          </ThreatProvider>
         </VulnerabilityProvider>
       </ScanProvider>
     </ProjectProvider>

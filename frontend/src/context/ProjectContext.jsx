@@ -1,84 +1,271 @@
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
-import { initialProjects } from "../data/mockProjects";
+import {
+    getProjects as fetchProjects,
+    getProject as fetchProjectById,
+    createProject as createProjectApi,
+    updateProject as updateProjectApi,
+    deleteProject as deleteProjectApi,
+} from "../services/projectService";
+
 
 const ProjectContext = createContext(null);
 
+
 export function ProjectProvider({ children }) {
-  const [projects, setProjects] = useState(() => {
-    try {
-      const saved = localStorage.getItem("secureguard_projects");
 
-      return saved
-        ? JSON.parse(saved)
-        : initialProjects;
-    } catch {
-      return initialProjects;
-    }
-  });
+    const [projects, setProjects] =
+        useState([]);
 
-  useEffect(() => {
-    localStorage.setItem(
-      "secureguard_projects",
-      JSON.stringify(projects)
-    );
-  }, [projects]);
+    const [loading, setLoading] =
+        useState(true);
 
-  const addProject = (projectData) => {
-    const newProject = {
-      ...projectData,
-      id: `PRJ-${Date.now()}`,
-      status: "Active",
-      securityScore: null,
-      vulnerabilities: null,
-      createdAt: new Date().toISOString().split("T")[0],
+    const [error, setError] =
+        useState(null);
+
+
+    const loadProjects = async () => {
+
+        setLoading(true);
+        setError(null);
+
+        try {
+
+            const data =
+                await fetchProjects();
+
+            setProjects(data);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load projects:",
+                error
+            );
+
+            setError(
+                "Failed to load projects."
+            );
+
+        } finally {
+
+            setLoading(false);
+        }
     };
 
-    setProjects((previous) => [
-      newProject,
-      ...previous,
-    ]);
 
-    return newProject;
-  };
+    useEffect(() => {
 
-  const deleteProject = (id) => {
-    setProjects((previous) =>
-      previous.filter((project) => project.id !== id)
+        loadProjects();
+
+    }, []);
+
+
+    const addProject = async (
+        projectData
+    ) => {
+
+        setError(null);
+
+        try {
+
+            const newProject =
+                await createProjectApi(
+                    projectData
+                );
+
+            setProjects(
+                (previous) => [
+                    newProject,
+                    ...previous,
+                ]
+            );
+
+            return newProject;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to create project:",
+                error
+            );
+
+            setError(
+                "Failed to create project."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const updateProject = async (
+        id,
+        projectData
+    ) => {
+
+        setError(null);
+
+        try {
+
+            const updatedProject =
+                await updateProjectApi(
+                    id,
+                    projectData
+                );
+
+            setProjects(
+                (previous) =>
+                    previous.map(
+                        (project) =>
+                            project.id === id
+                                ? updatedProject
+                                : project
+                    )
+            );
+
+            return updatedProject;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to update project:",
+                error
+            );
+
+            setError(
+                "Failed to update project."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const deleteProject = async (
+        id
+    ) => {
+
+        setError(null);
+
+        try {
+
+            await deleteProjectApi(id);
+
+            setProjects(
+                (previous) =>
+                    previous.filter(
+                        (project) =>
+                            project.id !== id
+                    )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to delete project:",
+                error
+            );
+
+            setError(
+                "Failed to delete project."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const getProject = (id) => {
+
+        return projects.find(
+            (project) =>
+                project.id === Number(id)
+        );
+    };
+
+
+    const getProjectById = async (
+        id
+    ) => {
+
+        const existingProject =
+            getProject(id);
+
+        if (existingProject) {
+
+            return existingProject;
+        }
+
+
+        const project =
+            await fetchProjectById(id);
+
+
+        setProjects(
+            (previous) => {
+
+                const alreadyExists =
+                    previous.some(
+                        (item) =>
+                            item.id === project.id
+                    );
+
+                if (alreadyExists) {
+                    return previous;
+                }
+
+                return [
+                    ...previous,
+                    project,
+                ];
+            }
+        );
+
+
+        return project;
+    };
+
+
+    return (
+        <ProjectContext.Provider
+            value={{
+                projects,
+                loading,
+                error,
+                addProject,
+                updateProject,
+                deleteProject,
+                getProject,
+                getProjectById,
+                refreshProjects:
+                    loadProjects,
+            }}
+        >
+            {children}
+        </ProjectContext.Provider>
     );
-  };
-
-  const getProject = (id) => {
-    return projects.find((project) => project.id === id);
-  };
-
-  return (
-    <ProjectContext.Provider
-      value={{
-        projects,
-        addProject,
-        deleteProject,
-        getProject,
-      }}
-    >
-      {children}
-    </ProjectContext.Provider>
-  );
 }
 
+
 export function useProjects() {
-  const context = useContext(ProjectContext);
 
-  if (!context) {
-    throw new Error(
-      "useProjects must be used inside ProjectProvider"
-    );
-  }
+    const context =
+        useContext(ProjectContext);
 
-  return context;
+
+    if (!context) {
+
+        throw new Error(
+            "useProjects must be used inside ProjectProvider"
+        );
+    }
+
+
+    return context;
 }

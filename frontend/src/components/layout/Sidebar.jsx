@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const navigation = [
   {
@@ -100,6 +102,19 @@ const navigation = [
 ];
 
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+
+    await logout();
+
+    navigate(
+      "/login",
+      { replace: true }
+    );
+  };
   return (
     <aside className="sidebar">
 
@@ -159,7 +174,11 @@ function Sidebar() {
           </div>
         </div>
 
-        <button className="logout-button" type="button">
+        <button
+          className="logout-button"
+          type="button"
+          onClick={handleLogout}
+        >
           <LogOut size={17} />
           <span>Logout</span>
         </button>

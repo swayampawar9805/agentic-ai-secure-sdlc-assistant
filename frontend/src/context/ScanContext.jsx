@@ -1,78 +1,278 @@
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 
-import { initialScans } from "../data/mockScans";
+import {
+    getScans as fetchScans,
+    getScan as fetchScanById,
+    createScan as createScanApi,
+    updateScan as updateScanApi,
+    deleteScan as deleteScanApi,
+} from "../services/scanService";
 
-const ScanContext = createContext(null);
 
-export function ScanProvider({ children }) {
-  const [scans, setScans] = useState(() => {
-    try {
-      const saved = localStorage.getItem("secureguard_scans");
+const ScanContext =
+    createContext(null);
 
-      return saved ? JSON.parse(saved) : initialScans;
-    } catch {
-      return initialScans;
-    }
-  });
 
-  useEffect(() => {
-    localStorage.setItem(
-      "secureguard_scans",
-      JSON.stringify(scans)
-    );
-  }, [scans]);
+export function ScanProvider({
+    children
+}) {
 
-  const addScan = (scanData) => {
-    const newScan = {
-      ...scanData,
-      id: `SCN-${Date.now()}`,
-      status: "Queued",
-      progress: 0,
-      startedAt: new Date().toISOString(),
-      duration: "—",
-      findings: {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
-      },
+    const [scans, setScans] =
+        useState([]);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState(null);
+
+
+    const loadScans = async () => {
+
+        setLoading(true);
+        setError(null);
+
+        try {
+
+            const data =
+                await fetchScans();
+
+            setScans(data);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load scans:",
+                error
+            );
+
+            setError(
+                "Failed to load scans."
+            );
+
+        } finally {
+
+            setLoading(false);
+        }
     };
 
-    setScans((previous) => [newScan, ...previous]);
 
-    return newScan;
-  };
+    useEffect(() => {
 
-  const getScan = (id) => {
-    return scans.find((scan) => scan.id === id);
-  };
+        loadScans();
 
-  return (
-    <ScanContext.Provider
-      value={{
-        scans,
-        addScan,
-        getScan,
-      }}
-    >
-      {children}
-    </ScanContext.Provider>
-  );
+    }, []);
+
+
+    const addScan = async (
+        scanData
+    ) => {
+
+        setError(null);
+
+        try {
+
+            const newScan =
+                await createScanApi(
+                    scanData
+                );
+
+            setScans(
+                (previous) => [
+                    newScan,
+                    ...previous,
+                ]
+            );
+
+            return newScan;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to create scan:",
+                error
+            );
+
+            setError(
+                "Failed to create scan."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const updateScan = async (
+        id,
+        scanData
+    ) => {
+
+        setError(null);
+
+        try {
+
+            const updatedScan =
+                await updateScanApi(
+                    id,
+                    scanData
+                );
+
+            setScans(
+                (previous) =>
+                    previous.map(
+                        (scan) =>
+                            scan.id === id
+                                ? updatedScan
+                                : scan
+                    )
+            );
+
+            return updatedScan;
+
+        } catch (error) {
+
+            console.error(
+                "Failed to update scan:",
+                error
+            );
+
+            setError(
+                "Failed to update scan."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const deleteScan = async (
+        id
+    ) => {
+
+        setError(null);
+
+        try {
+
+            await deleteScanApi(id);
+
+            setScans(
+                (previous) =>
+                    previous.filter(
+                        (scan) =>
+                            scan.id !== id
+                    )
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to delete scan:",
+                error
+            );
+
+            setError(
+                "Failed to delete scan."
+            );
+
+            throw error;
+        }
+    };
+
+
+    const getScan = (id) => {
+
+        return scans.find(
+            (scan) =>
+                scan.id === Number(id)
+        );
+    };
+
+
+    const getScanById = async (
+        id
+    ) => {
+
+        const existingScan =
+            getScan(id);
+
+        if (existingScan) {
+
+            return existingScan;
+        }
+
+
+        const scan =
+            await fetchScanById(id);
+
+
+        setScans(
+            (previous) => {
+
+                const alreadyExists =
+                    previous.some(
+                        (item) =>
+                            item.id === scan.id
+                    );
+
+                if (alreadyExists) {
+
+                    return previous;
+                }
+
+                return [
+                    ...previous,
+                    scan,
+                ];
+            }
+        );
+
+
+        return scan;
+    };
+
+
+    return (
+        <ScanContext.Provider
+            value={{
+                scans,
+                loading,
+                error,
+
+                addScan,
+                updateScan,
+                deleteScan,
+
+                getScan,
+                getScanById,
+
+                refreshScans:
+                    loadScans,
+            }}
+        >
+            {children}
+        </ScanContext.Provider>
+    );
 }
 
+
 export function useScans() {
-  const context = useContext(ScanContext);
 
-  if (!context) {
-    throw new Error(
-      "useScans must be used inside ScanProvider"
-    );
-  }
+    const context =
+        useContext(ScanContext);
 
-  return context;
+
+    if (!context) {
+
+        throw new Error(
+            "useScans must be used inside ScanProvider"
+        );
+    }
+
+
+    return context;
 }

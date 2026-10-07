@@ -9,14 +9,43 @@ class Project(models.Model):
         ('archived', 'Archived'),
     ]
 
-    name = models.CharField(max_length=200)
+    SOURCE_TYPE_CHOICES = [
+        ('github', 'GitHub'),
+        ('zip', 'ZIP Upload'),
+    ]
+
+    name = models.CharField(
+        max_length=200
+    )
 
     description = models.TextField(
         blank=True
     )
 
+    language = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    framework = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    source_type = models.CharField(
+        max_length=20,
+        choices=SOURCE_TYPE_CHOICES
+    )
+
     repository_url = models.URLField(
         blank=True
+    )
+
+    source_archive = models.FileField(
+        upload_to='project_archives/',
+        blank=True,
+        null=True
     )
 
     default_branch = models.CharField(

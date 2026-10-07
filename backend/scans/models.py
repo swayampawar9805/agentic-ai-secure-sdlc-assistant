@@ -1,22 +1,22 @@
 from django.db import models
-from projects.models import Project
 from django.contrib.auth.models import User
+from projects.models import Project
 
 
 class Scan(models.Model):
 
-    SCAN_TYPES = [
-        ('full', 'Full Scan'),
-        ('code', 'Code Scan'),
-        ('dependency', 'Dependency Scan'),
-        ('threat', 'Threat Scan'),
-    ]
-
     STATUS_CHOICES = [
-        ('queued', 'Queued'),
+        ('pending', 'Pending'),
         ('running', 'Running'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
+    ]
+
+    SCAN_TYPE_CHOICES = [
+        ('full', 'Full Security Scan'),
+        ('sast', 'Static Analysis'),
+        ('dependency', 'Dependency Scan'),
+        ('secrets', 'Secret Scan'),
     ]
 
     project = models.ForeignKey(
@@ -25,22 +25,22 @@ class Scan(models.Model):
         related_name='scans'
     )
 
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='scans'
+    )
+
     scan_type = models.CharField(
-        max_length=30,
-        choices=SCAN_TYPES
+        max_length=50,
+        choices=SCAN_TYPE_CHOICES,
+        default='full'
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='queued'
-    )
-
-    triggered_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+        default='pending'
     )
 
     started_at = models.DateTimeField(
@@ -53,14 +53,97 @@ class Scan(models.Model):
         blank=True
     )
 
-    summary = models.JSONField(
-        default=dict,
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        return (
+            f"{self.project.name} - "
+            f"{self.scan_type} - "
+            f"{self.status}"
+        )
+
+
+class Finding(models.Model):
+
+    SEVERITY_CHOICES = [
+        ('critical', 'Critical'),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+        ('info', 'Informational'),
+    ]
+
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('resolved', 'Resolved'),
+        ('ignored', 'Ignored'),
+    ]
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name='findings'
+    )
+
+    severity = models.CharField(
+        max_length=20,
+        choices=SEVERITY_CHOICES
+    )
+
+    title = models.CharField(
+        max_length=255
+    )
+
+    description = models.TextField(
         blank=True
+    )
+
+    file_path = models.CharField(
+        max_length=500,
+        blank=True
+    )
+
+    line_number = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    rule_id = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    tool = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    remediation = models.TextField(
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='open'
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True
     )
 
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
     def __str__(self):
-        return f"{self.project.name} - {self.scan_type}"
+        return (
+            f"{self.severity.upper()} - "
+            f"{self.title}"
+        )
