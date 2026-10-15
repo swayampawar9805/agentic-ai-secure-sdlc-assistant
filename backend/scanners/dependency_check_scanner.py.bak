@@ -1,0 +1,243 @@
+
+import json
+import os
+import subprocess
+import tempfile
+
+from scanners.semgrep_scanner import clean_file_path
+
+
+DEFAULT_EXECUTABLE = (
+    r"C:\Tools\dependency-check\bin\dependency-check.bat"
+)
+
+
+def run_dependency_check(target_path, timeout=600):
+    """
+    Run OWASP Dependency-Check against a project directory.
+    Return its parsed JSON report.
+    """
+    executable = os.environ.get(
+        "DEPENDENCY_CHECK_PATH",
+        DEFAULT_EXECUTABLE,
+    )
+
+    if not os.path.isfile(executable):
+        raise RuntimeError(
+            "Dependency-Check was not found. Check "
+            "DEPENDENCY_CHECK_PATH and the installation path."
+        )
+
+    with tempfile.TemporaryDirectory(
+        prefix="secure_sdlc_dependency_check_"
+    ) as report_directory:
+        report_path = os.path.join(
+            report_directory,
+            "dependency-check-report.json",
+        )
+
+        command = [
+            executable,
+            "--project",
+            "Secure SDLC Assistant",
+            "--scan",
+            os.path.abspath(target_path),
+            "--format",
+            "JSON",
+            "--out",
+            report_directory,
+            "--noupdate",
+            "--disableYarnAudit",
+        ]
+
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise RuntimeError(
+                f"Dependency-Check timed out after {timeout} seconds."
+            ) from error
+        except OSError as error:
+            raise RuntimeError(
+                "Could not start Dependency-Check. Verify its "
+                "installation and Java configuration."
+            ) from error
+
+        if not os.path.isfile(report_path):
+            details = (
+                result.stderr or result.stdout or ""
+            ).strip()
+
+            raise RuntimeError(
+                "Dependency-Check did not generate a JSON report. "
+                f"Exit code: {result.returncode}. "
+                f"Details: {details[:1000]}"
+            )
+
+        try:
+            with open(
+                report_path,
+                "r",
+                encoding="utf-8",
+            ) as report_file:
+                report_data = json.load(report_file)
+        except (OSError, json.JSONDecodeError) as error:
+            raise RuntimeError(
+                "Dependency-Check generated an invalid JSON report."
+            ) from error
+
+        if result.returncode != 0:
+            details = (
+                result.stderr or result.stdout or ""
+            ).strip()
+
+            raise RuntimeError(
+                "Dependency-Check reported an analysis error. "
+                f"Exit code: {result.returncode}. "
+                f"Details: {details[:1000]}"
+            )
+
+        if not isinstance(report_data, dict):
+            raise RuntimeError(
+                "Unexpected Dependency-Check report structure."
+            )
+
+        return report_data
+
+
+def parse_dependency_check_results(report_data):
+    """
+    Convert Dependency-Check vulnerabilities into the application's
+    standard Finding format. Do not store dependency source contents.
+    """
+    findings = []
+    seen = set()
+
+    for dependency in report_data.get("dependencies", []):
+        if dependency.get("isVirtual"):
+            continue
+
+        file_path = str(
+            dependency.get("filePath")
+            or dependency.get("fileName")
+            or ""
+        )
+        file_path = clean_file_path(file_path)[:500]
+
+        packages = dependency.get("packages") or []
+        package_names = [
+            str(package.get("id") or package.get("name") or "")
+            for package in packages
+            if isinstance(package, dict)
+        ]
+        package_label = ", ".join(
+            name for name in package_names if name
+        )
+
+        for vulnerability in dependency.get("vulnerabilities", []):
+            vulnerability_id = str(
+                vulnerability.get("name")
+                or vulnerability.get("source")
+                or "Dependency vulnerability"
+            )[:255]
+
+            key = (file_path, vulnerability_id)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            severity = map_dependency_severity(
+                vulnerability.get("severity"),
+                vulnerability.get("cvssv3"),
+                vulnerability.get("cvssv2"),
+            )
+
+            description = str(
+                vulnerability.get("description") or ""
+            ).strip()
+
+            references = vulnerability.get("references") or []
+            reference_urls = [
+                str(reference["url"])
+                for reference in references
+                if isinstance(reference, dict)
+                and reference.get("url")
+            ]
+
+            if reference_urls:
+                description += (
+                    ("\n\n" if description else "")
+                    + "References: "
+                    + ", ".join(reference_urls[:5])
+                )
+
+            remediation = (
+                "Review the advisory and upgrade the affected "
+                "dependency to a fixed, supported version where "
+                "available. Retest the project after upgrading."
+            )
+
+            if package_label:
+                remediation += f" Detected package(s): {package_label}."
+
+            findings.append({
+                "severity": severity,
+                "title": f"Vulnerable dependency: {vulnerability_id}"[:255],
+                "description": description[:10000],
+                "file_path": file_path,
+                "line_number": None,
+                "rule_id": vulnerability_id,
+                "tool": "OWASP Dependency-Check",
+                "remediation": remediation[:10000],
+            })
+
+    return findings
+
+
+def map_dependency_severity(
+    severity,
+    cvssv3=None,
+    cvssv2=None,
+):
+    """Map Dependency-Check severity and CVSS scores to Finding severity."""
+    mapping = {
+        "CRITICAL": "critical",
+        "HIGH": "high",
+        "MEDIUM": "medium",
+        "MODERATE": "medium",
+        "LOW": "low",
+        "INFO": "info",
+        "INFORMATIONAL": "info",
+    }
+
+    normalized = str(severity or "").strip().upper()
+
+    if normalized in mapping:
+        return mapping[normalized]
+
+    for score_data in (cvssv3, cvssv2):
+        if not isinstance(score_data, dict):
+            continue
+
+        try:
+            score = float(score_data.get("baseScore"))
+        except (TypeError, ValueError):
+            continue
+
+        if score >= 9.0:
+            return "critical"
+        if score >= 7.0:
+            return "high"
+        if score >= 4.0:
+            return "medium"
+        if score > 0:
+            return "low"
+
+    return "info"

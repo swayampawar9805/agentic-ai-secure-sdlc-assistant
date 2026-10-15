@@ -15,6 +15,11 @@ class ScanSerializer(
         read_only=True
     )
 
+    project_id = serializers.IntegerField(
+        source="scan.project.id",
+        read_only=True
+    )
+
     created_by_username = serializers.CharField(
         source='created_by.username',
         read_only=True
@@ -31,6 +36,7 @@ class ScanSerializer(
             'id',
             'project',
             'project_name',
+            'project_id',
             'created_by',
             'created_by_username',
             'scan_type',
@@ -81,6 +87,15 @@ class FindingSerializer(
             'rule_id',
             'tool',
             'remediation',
+            'validation_status',
+            'scanner_severity',
+            'cvss_score',
+            'cvss_version',
+            'cvss_vector',
+            'installed_version',
+            'advisory_severity',
+            'fixed_version',
+            'advisory_url',
             'status',
             'created_at',
             'updated_at',
@@ -91,4 +106,13 @@ class FindingSerializer(
             'scan_id',
             'created_at',
             'updated_at',
+            'validation_status',
+            'scanner_severity',
+            'cvss_score',
+            'cvss_version',
+            'cvss_vector',
+            'installed_version',
+            'advisory_severity',
+            'fixed_version',
+            'advisory_url',
         ]

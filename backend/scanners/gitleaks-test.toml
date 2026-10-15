@@ -1,0 +1,8 @@
+title = "Secure SDLC Test Rules"
+
+[[rules]]
+id = "test-password-assignment"
+description = "Detects a hardcoded password assignment"
+regex = '''(?i)password\s*=\s*"([^"]{8,})"'''
+secretGroup = 1
+keywords = ["password"]

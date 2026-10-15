@@ -133,6 +133,69 @@ class Finding(models.Model):
         blank=True
     )
 
+    
+    VALIDATION_STATUS_CHOICES = [
+        ('not_applicable', 'Not applicable'),
+        ('needs_review', 'Needs advisory review'),
+        ('advisory_verified', 'Advisory verified'),
+        ('severity_discrepancy', 'Severity discrepancy'),
+    ]
+
+    validation_status = models.CharField(
+        max_length=30,
+        choices=VALIDATION_STATUS_CHOICES,
+        default='not_applicable',
+    )
+
+    scanner_severity = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+    )
+
+    cvss_score = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+    )
+
+    cvss_version = models.CharField(
+        max_length=10,
+        blank=True,
+        default='',
+    )
+
+    cvss_vector = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+    )
+
+    installed_version = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+    )
+
+    advisory_severity = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+    )
+
+    fixed_version = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+    )
+
+    advisory_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        default='',
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

@@ -30,6 +30,7 @@ def run_semgrep(
             encoding="utf-8",
             errors="replace",
             timeout=300,
+            check=False,
         )
 
     except FileNotFoundError:
@@ -38,10 +39,10 @@ def run_semgrep(
             "is not available in PATH."
         )
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as error:
         raise RuntimeError(
-            "Semgrep scan timed out."
-        )
+            "Semgrep scan timed out after 300 seconds."
+        ) from error
 
     if not result.stdout:
         raise RuntimeError(

@@ -1,0 +1,22 @@
+[
+ {
+  "RuleID": "test-password-assignment",
+  "Description": "Detects a hardcoded password assignment",
+  "StartLine": 77,
+  "EndLine": 78,
+  "StartColumn": 13,
+  "EndColumn": 50,
+  "Match": "password =\n      \"REDACTED\"",
+  "Secret": "REDACTED",
+  "File": "frontend/node_modules/react-router/docs/how-to/form-validation.md",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 3.8211198,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "frontend/node_modules/react-router/docs/how-to/form-validation.md:test-password-assignment:77"
+ }
+]
