@@ -305,7 +305,7 @@ def parse_dependency_check_results(report_data):
 
             # Preserve available scoring evidence for review.
             evidence_lines = [
-                "Validation status: Needs advisory review",
+                "Initial validation status: Needs advisory review",
                 "Validation method: Automated Dependency-Check matching",
                 f"Scanner-reported severity: {scanner_severity}",
             ]

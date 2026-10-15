@@ -12,6 +12,32 @@ import {
 import { Link } from "react-router-dom";
 import { useVulnerabilities } from "../context/VulnerabilityContext";
 
+function getAdvisoryVerification(item) {
+  const validationStatus = (
+    item.validation_status || "needs_review"
+  ).toLowerCase();
+
+  if (validationStatus === "advisory_verified") {
+    return { label: "Verified", value: "verified" };
+  }
+
+  const description = item.description || "";
+
+  if (description.includes("Verification unavailable:")) {
+    return { label: "Unavailable", value: "unavailable" };
+  }
+
+  if (
+    description.includes(
+      "Verification completed, but OSV returned no matching record"
+    )
+  ) {
+    return { label: "No Match", value: "unmatched" };
+  }
+
+  return { label: "Needs Review", value: "review" };
+}
+
 function Vulnerabilities() {
   const {
     vulnerabilities,
@@ -23,6 +49,7 @@ function Vulnerabilities() {
   const [search, setSearch] = useState("");
   const [severity, setSeverity] = useState("All");
   const [status, setStatus] = useState("All");
+  const [advisoryStatus, setAdvisoryStatus] = useState("All");
 
   const count = (value) =>
     vulnerabilities.filter(
@@ -58,10 +85,21 @@ function Vulnerabilities() {
 
       const matchesStatus =
         status === "All" || item.status === status;
+      
+      const verification = getAdvisoryVerification(item);
 
-      return matchesSearch && matchesSeverity && matchesStatus;
+      const matchesAdvisory =
+        advisoryStatus === "All" ||
+        verification.value === advisoryStatus;
+
+      return (
+        matchesSearch &&
+        matchesSeverity &&
+        matchesStatus &&
+        matchesAdvisory
+      );
     });
-  }, [vulnerabilities, search, severity, status]);
+  }, [vulnerabilities, search, severity, status, advisoryStatus]);
 
   return (
     <div className="page-container vulnerability-page">
@@ -159,6 +197,21 @@ function Vulnerabilities() {
               </select>
             </div>
 
+            <div className="vulnerability-select">
+              <ShieldCheck size={15} />
+              <select
+                value={advisoryStatus}
+                onChange={(event) => setAdvisoryStatus(event.target.value)}
+                aria-label="Filter by advisory verification"
+              >
+                <option value="All">All Advisory Checks</option>
+                <option value="verified">Verified</option>
+                <option value="review">Needs Review</option>
+                <option value="unmatched">No Matching Advisory</option>
+                <option value="unavailable">Verification Unavailable</option>
+              </select>
+            </div>
+
             <button
               type="button"
               className="finding-view-link"
@@ -198,6 +251,7 @@ function Vulnerabilities() {
                   <th>Severity</th>
                   <th>Category</th>
                   <th>Source</th>
+                  <th>Advisory Check</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -227,6 +281,21 @@ function Vulnerabilities() {
 
                       <td>{item.category || "Security Finding"}</td>
                       <td>{item.tool || "Unknown Tool"}</td>
+                      <td>
+                        {(() => {
+                          const verification = getAdvisoryVerification(item);
+
+                          return (
+                            <span
+                              className={`advisory-list-status advisory-list-status--${verification.value}`}
+                              title={`Advisory verification: ${verification.label}`}
+                            >
+                              <i />
+                              {verification.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
 
                       <td>
                         <span

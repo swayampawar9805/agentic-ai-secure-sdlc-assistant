@@ -204,8 +204,9 @@ def verify_dependency_advisory(
             return result
 
         result["verification_message"] = (
-            "No matching OSV record confirmed this CVE for the exact "
-            "Maven package and installed version. This is not proof that "
+            "Verification completed, but OSV returned no matching record "
+            "for this CVE, Maven package, and installed version. The finding "
+            "remains unconfirmed by this source; this does not prove that "
             "the dependency is unaffected."
         )
         return result
@@ -218,7 +219,8 @@ def verify_dependency_advisory(
         ValueError,
     ):
         result["verification_message"] = (
-            "OSV verification could not be completed. Original scanner "
-            "evidence should be retained for review."
+            "Verification unavailable: the OSV request failed or its "
+            "response could not be processed. The original scanner finding "
+            "is retained and requires review."
         )
         return result

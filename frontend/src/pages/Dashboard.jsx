@@ -153,8 +153,20 @@ function Dashboard() {
     (finding) => normalize(finding.status) === "open"
   ).length;
 
+  const resolvedFindings = findings.filter(
+    (finding) => normalize(finding.status) === "resolved"
+  ).length;
+
+  const ignoredFindings = findings.filter(
+    (finding) => normalize(finding.status) === "ignored"
+  ).length;
+
   const completedScans = scans.filter(
     (scan) => getScanStatus(scan) === "completed"
+  ).length;
+
+  const failedScans = scans.filter(
+    (scan) => getScanStatus(scan) === "failed"
   ).length;
 
   const runningScans = scans.filter((scan) =>
@@ -260,14 +272,14 @@ function Dashboard() {
     {
       title: "Security Scans",
       value: scans.length,
-      change: `${completedScans} completed · ${runningScans} pending/running`,
+      change: `${completedScans} completed · ${runningScans} pending/running · ${failedScans} failed`,
       icon: ShieldCheck,
       color: "green",
     },
     {
       title: "Vulnerabilities",
       value: findings.length,
-      change: `${openFindings} open findings`,
+      change: `${openFindings} open · ${resolvedFindings} resolved · ${ignoredFindings} ignored`,
       icon: AlertTriangle,
       color: "red",
     },
